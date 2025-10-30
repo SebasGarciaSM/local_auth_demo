@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
 class LoginPage extends StatefulWidget {
@@ -11,6 +12,41 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final LocalAuthentication auth = LocalAuthentication();
   _SupportState _supportState = _SupportState.unknown;
+  bool? _canCheckBiometrics;
+  List<BiometricType>? _availableBiometrics;
+
+  Future<void> _checkBiometrics() async {
+    late bool canCheckBiometrics;
+    try {
+      canCheckBiometrics = await auth.canCheckBiometrics;
+    } on PlatformException catch (e) {
+      canCheckBiometrics = false;
+      print(e);
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _canCheckBiometrics = canCheckBiometrics;
+    });
+  }
+
+  Future<void> _getAvailableBioemtrics() async {
+    late List<BiometricType> availableBioemtrics;
+    try {
+      availableBioemtrics = await auth.getAvailableBiometrics();
+    } on PlatformException catch (e) {
+      availableBioemtrics = <BiometricType>[];
+      print(e);
+    }
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _availableBiometrics = availableBioemtrics;
+    });
+  }
 
   @override
   void initState() {
@@ -41,7 +77,19 @@ class _LoginPageState extends State<LoginPage> {
               const Text("This device is supported")
             else
               const Text("This device is not supported"),
-            const SizedBox(height: 20.0),
+            const SizedBox(height: 50.0),
+            Text("Can check biometrics: $_canCheckBiometrics"),
+            ElevatedButton(
+              onPressed: _checkBiometrics,
+              child: const Text("Check biometrics"),
+            ),
+            const SizedBox(height: 50.0),
+            Text("Available biometrics: $_availableBiometrics"),
+            ElevatedButton(
+              onPressed: _getAvailableBioemtrics,
+              child: const Text("Get available biometrics"),
+            ),
+            const SizedBox(height: 50.0),
             ElevatedButton.icon(
               onPressed: () {
                 // Implement Face ID authentication logic here
